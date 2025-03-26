@@ -1,0 +1,28 @@
+#APRENDIZAJE
+#CONTENEDOR O PAQUETE: paquete de aplicacion con dependencias y archivos de configuracion.
+-PORTABLES: Facil de compartir
+#SE ALMACENAN EN UN REPOSITORIO DE CONTENEDORES
+-PRIVADOS
+-PUBLICOS: DOCKER HUB : APLICACIONES EN GENERAL
+____
+ANTES DE LOS CONTENEDORES: PROBLEMAS DE VERSIONES Y DEPENDENCIAS
+DESPLIEGUES: Codigo, dependencias y archivos de configuracion independiente , instrucciones.
+se envia a operaciones para toma de decisiones y propenso a errores por distintas versiones de dependencias no incluidas en instrucciones.
+____
+CONTENEDORES:Descargar una imagen basada en linux
+DESPLIEGUE:DEVS y OPS Construyen una imagen en conjunto, y la unica dependencia es Runtime de Docker gracias pipeline. el proceso de despligue facil y auto.
+IMAGEN: Empaquetado :Dependencias, codigo y lo que se comparte
+CONTENEDOR : CAPAS DE IMAGEN , PESAN POCO
+VIRTUALZACION: se virtualizan las aplicaciones pero no el kernel
+___________________________________________________________________________
+DOCKER DESKTOP: MAQUINA VIRTUAL OPTIMIZADA Y CORRE LINUX
+DOCKER HUB:CONTIENE VARIOS ATRACTIVOS
+____________________________________________________________________________
+#COMANDOS
+# docker images: muestra las imagenes actuales
+# docker pull xxx (nombre del contenedor o imagen) : descarga
+# docker pull xxx:xx (version luego de los 2 puntos): descarga de version
+# 
+
+
+
