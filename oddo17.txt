@@ -1,0 +1,9 @@
+VERPSQL=$(psql --version | awk '{print $3}')
+
+INICIAR ODOO COMPLETAMENTE - desde carpeta usuario en home - odoo.sh
+source /opt/venv/odoo17/bin/activate
+sudo -u postgres /usr/lib/postgresql/14/bin/postgres -D /etc/postgresql/14/
+main &
+python3 /opt/oddo17/odoo-bin --addons-path=/opt/oddo17/addons -d mydb
+-----------------
+

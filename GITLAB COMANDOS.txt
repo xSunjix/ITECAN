@@ -1,0 +1,20 @@
+CLONAR REPOSITORIO: git clone -b main https://gitlab.itecan.es/scripts/odoo-installation.git odoo-script 
+(odoo-script es como se guarda la carpeta)
+ 
+REVISION: cd  odoo-script
+ 
+VER RAMAS Y PRINCIPAL: git branch
+ 
+CREACION DE NUEVA RAMA PARA TRABAJAR: git checkout -b script-v2
+ 
+SOLO VER LA RAMA ACTUAL Y LOS CAMBIOS LOCALES: git status
+ 
+AGREGAR CAMBIOS AL PAQUETE DE ENVIO: git add .
+ 
+REALIZAR COMMIT (PUNTO DE GUARDADO) Y AGREGAR UNA DESCRIPCION: git commit -m "Add directory in user odoo"
+ 
+VER LOS ORIGINS: git remote -v
+ 
+SUBIR CAMBIOS A LA RAMA EN GITLAB: git push origin script-v2
+ 
+VOLVER ATRAS EN CAMBIOS (COMMITS) EN CASO DE ERROR O EQUIVOCACION: git restore install.sh
