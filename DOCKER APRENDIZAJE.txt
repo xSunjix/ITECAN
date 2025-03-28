@@ -22,7 +22,40 @@ ____________________________________________________________________________
 # docker images: muestra las imagenes actuales
 # docker pull xxx (nombre del contenedor o imagen) : descarga
 # docker pull xxx:xx (version luego de los 2 puntos): descarga de version
-# 
+# docker compose up (subir contenedor)
+# docker compose duwn (bajar contenedor)
+# docker ps (ver contenedores activos)
+# docker rm ID (eliminar contenedor por ID)
+# docker stop ID (para contenedor por ID)
+# docker info: (cantidad de contenedores e imágenes instalados) 
+# docker images: lista imágenes disponibles en la (nombre, id, espacio que ocupa, el tiempo desde que fue creada). 
+# docker build: crea una imagen desde el fichero Dockerfile del directorio actual.
+# docker pull: descarga en la máquina actual la versión de la imagen indicada. En caso de 
+no indicar la versión descarga todas las que estén disponibles. 
+# docker push:sube la versión de la imagen indicada a un Registro de Docker, permitiendo 
+su distribución a otras máquinas. 
+# docker rmi: elimina una imagen de la máquina actual.
+# docker run: crea un contenedor a partir de una imagen. Este comando permite multitud 
+de parámetros, que son actualizados para cada versión del Docker Engine, por lo que 
+para su documentación lo mejor es hacer referencia a la página oficial. 
+# docker ps: muestra los contenedores que están corriendo en la máquina. Con el flag ‐a 
+muestra también los contenedores que están parados. 
+# docker inspect contenedor: muestra información detallada de un contenedor en 
+formato json. Se puede acceder a un campo particular con el comando docker inspect ‐
+f '{{.Name}}' contenedor . 
+# docker stop contenedor: para la ejecución de un contenedor. 
+# docker start contenedor: reanuda la ejecución de un contenedor. 
+# docker rm contenedor: elimina un contenedor. Para borrar todos los contenedores de 
+una máquina se puede ejecutar el comando docker rm ‐fv $(docker ps ‐aq) . 
+# docker logs contenedor: muestra los logs de un contenedor.
+# docker stats contenedor: muestra las estadísticas de ejecución de un contenedor, como 
+son la memoria utilizada, la CPU, el disco… 
+# docker exec contenedor comando: ejecuta un comando en un contenedor. Útil para 
+depurar contenedores en ejecución con las opciones docker exec ‐it contenedor bash .
+# docker volume ls: lista los volúmenes existentes en la máquina. Para un listado completo 
+de los comandos relacionados con volúmenes ejecuta docker volume ‐‐help . 
+# docker network ls: lista las redes existentes en la máquina. Para un listado completo de 
+los comandos relacionados con redes ejecuta docker network ‐‐help .
 
 
 
