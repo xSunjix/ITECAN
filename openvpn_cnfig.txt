@@ -1,0 +1,166 @@
+==========================================================
+-------------SERVIDOR OPENVPN RAPSBERRY PI----------------
+==========================================================
+===========INSTALACION OPENVPN (posible script)
+#!/bin/bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install openvpn easy-rsa -y
+make-cadir ~/openvpn-ca
+make-cadir ~/easy-rsa
+cd ~/easy-rsa
+
+===========CONFIGURACION ~/easy-rsa/vars
+
+set_var EASYRSA_REQ_COUNTRY     "Es"
+set_var EASYRSA_REQ_PROVINCE    "Cantabria"
+set_var EASYRSA_REQ_CITY        "Santader"
+set_var EASYRSA_REQ_ORG         "Ext_itecan"
+set_var EASYRSA_REQ_EMAIL       "me@example.net"
+set_var EASYRSA_REQ_OU          "It"
+set_var EASYRSA_ALGO            "ec"
+set_var EASYRSA_DIGEST          "sha512"
+
+===========CREACION DE CERTIFICADOS
+luego ejecute los siguientes comandos y asigne estos valores al servidor:
+TODO ESTO SE EJECUTA DESDE ~/easy-rsa
+
+./easyrsa init-pki :ubuntu
+./easyrsa build-ca :Server-CA
+
+./easyrsa gen-req server nopass :vpn.Server-CA (asi sería sin contraseña)
+./easyrsa sign-req server server :vpn.Server-CA
+PEM pass phrase: ubuntu (es la clave que se te pedira cada vez que reinicies el servicio o inicie en el dispositivo luego de apagado, de momento la clave para ingresar via vpn es "ubuntu")
+
+./easyrsa gen-dh
+openvpn --genkey secret ta.key 
+
+es probable que ~/easy-rsa/pki/index.txt nos de problemas de permisos a la hora de crear usuarios firmados, se los otorgamos:
+ubuntu:root
+644
+
+./easyrsa gen-req client1 nopass :client1 [nombre del cliente]
+./easyrsa sign-req client client1 :client1 [nombre del cliente]
+
+===========TRASPASO A OPENVPN
+luego copiamos los certificados y ficheros creados a /etc/openvpn/server
+cd /etc/openvpn/server
+cp ~/easy-rsa/pki/ca.crt .
+cp ~/easy-rsa/pki/issued/server.crt .
+cp ~/easy-rsa/pki/private/server.key .
+cp ~/easy-rsa/pki/dh.pem .
+cp ~/easy-rsa/pki/ta.key .
+
+
+===========CONFIGURACION DE SERVIDOR OPENVPN
+la configuracion del servidor se encuentra en /etc/openvpn/server/server.conf
+port 1194
+proto udp
+dev tun
+ca /etc/openvpn/server/ca.crt
+cert /etc/openvpn/server/server.crt
+key /etc/openvpn/server/server.key
+dh /etc/openvpn/server/dh.pem  # Si se requiere un archivo DH para la negociación>
+auth SHA512
+tls-auth /etc/openvpn/server/ta.key 0
+topology subnet
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 1.1.1.1"
+push "dhcp-option DNS 8.8.8.8"
+keepalive 10 60
+cipher AES-256-CBC
+user nobody
+group nogroup
+persist-key
+persist-tun
+status openvpn-status.log
+log /var/log/openvpn.log
+verb 4
+explicit-exit-notify 1
+
+==========PUESTA EN MARCHA
+luego de esto habilitamos el openvpn
+sudo systemctl enable openvpn-server@server
+sudo systemctl start openvpn-server@server
+
+te pedira la contraseña o frase: debes escribir el siguiente comando:
+sudo systemd-tty-ask-password-agent
+contraseña-phrase : ubuntu
+
+para ver los certificados de un cliente es ./easyrsa show-cert "client2" ejemplo
+
+==========SEGURIDAD Y PUERTOS
+activamos el firewall
+ufw status
+ufw allow 1194/udp
+ufw allow OpenSSH
+ufw enable
+
+=========ACCESO A INTERNET CLIENTES
+vamos al fichero de configuracion: /etc/sysctl.conf
+borramos el # en:
+net.ipv4.ip_forward=1
+ejecutamos:
+sudo sysctl -p
+
+y luego para ver nuestra interfaz de red:
+ip route | grep default
+(ejemplos : eth0 ,wlan0, enp0s3,ens33)
+sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {aquí va la interfaz(sin las llaves)} -j MASQUERADE
+
+ya que es una regla iptable es probable  que se borre asi que para que se guarde y se aplique de forma automatica:(/etc/iptables/rules.v4 y .v6)
+sudo apt install iptables-persistent
+sudo netfilter-persistent save
+
+y ultimo paso en el servidor reiniciamos el servicio (nos pedira nuevamente la contraseña si es el caso)
+
+sudo systemctl restart openvpn-server@server.service
+
+
+==========FACTOR EXTERNO
+habilitar puerto para udp con la compañia de servicio de internet (si ya se probó el funcionamiento correcto de manera local)
+
+==========================================================
+------------CONFIGURACION CLIENTE EN LOCAL----------------
+==========================================================
+============CONFIGURACION FICHERO.ovpn
+Esto va dentro del fichero de configuracion cliente.ovpn
+client
+dev tun
+proto udp
+remote [IP LOCAL O PUBLICA DEL SERVIDOR] 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+# Cifrado
+data-ciphers AES-256-GCM:AES-256-CBC
+cipher AES-256-CBC
+# TLS
+tls-auth ta.key 1
+key-direction 1
+ca ca.crt
+cert client2.crt
+key client2.key
+auth SHA512
+# Verbosidad
+verb 4
+# Seguridad
+remote-cert-tls server
+# MSS Fix
+mssfix 1492
+# Keepalive
+keepalive 10 60
+
+
+================NO OLVIDAR PASAR LOS CERTIFICADOS Y KEYS CORRESPONDIENTES:
+USO DE WinSCP o por comandos SCP
+(ES PROBABLE QUE DEBAS CAMBIAR LOS PERMISOS DE FICHEROS {acceso denegado})
+FICHEROS DEL SERVIDOR:
+ta.key (~/easy-rsa/ta.key)
+ca.crt (~/easy-rsa/pki/ca.crt)
+FICHEROS PARA CLIENTE): 
+[nom_cli].crt (~/easy-rsa/pki/issued/.crt)
+[nom_cli].key (~/easy-rsa/private/pki/.key)
+
