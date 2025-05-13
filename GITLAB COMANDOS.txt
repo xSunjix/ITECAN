@@ -5,7 +5,7 @@ REVISION: cd  odoo-script
  
 VER RAMAS Y PRINCIPAL: git branch
  
-CREACION DE NUEVA RAMA PARA TRABAJAR: git checkout -b script-v2
+CREACION DE NUEVA RAMA PARA TRABAJAR (E INGRESAR EN ELLA): git checkout -b script-v2
  
 SOLO VER LA RAMA ACTUAL Y LOS CAMBIOS LOCALES: git status
  
