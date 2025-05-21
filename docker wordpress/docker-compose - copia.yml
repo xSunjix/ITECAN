@@ -1,0 +1,50 @@
+services:
+
+  db:
+    image: mysql:8
+    container_name: wordpress_db
+    restart: always
+    environment:
+      MYSQL_USER: vicente
+      MYSQL_PASSWORD: vicente
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql #LE HAGO SABER LAS BASES DE DATOS Y PERMISOS
+
+  wordpress:
+    image: wordpress:latest
+    depends_on:
+      - db
+    container_name: wordpress_container
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: vicente
+      WORDPRESS_DB_PASSWORD: vicente
+      WORDPRESS_DB_NAME: NEC
+    volumes:
+      - ./wordpress_data:/var/www/html
+
+  wordpress_2:
+    image: wordpress:latest
+    container_name: wordpress_container2
+    depends_on:
+      - db
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: vicente
+      WORDPRESS_DB_PASSWORD: vicente
+      WORDPRESS_DB_NAME: enterprise2
+    volumes:
+      - ./wordpress_data2:/var/www/html
+
+volumes:
+  db:
+  wordpress_data:
+  wordpress_data2:
