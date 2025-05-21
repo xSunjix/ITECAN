@@ -13,7 +13,7 @@ cd ~/easy-rsa
 
 set_var EASYRSA_REQ_COUNTRY     "Es"
 set_var EASYRSA_REQ_PROVINCE    "Cantabria"
-set_var EASYRSA_REQ_CITY        "El astillero"
+set_var EASYRSA_REQ_CITY        "El Astillero"
 set_var EASYRSA_REQ_ORG         "MAES"
 set_var EASYRSA_REQ_EMAIL       "maes@maes.es"
 set_var EASYRSA_REQ_OU          "Manutención"
@@ -35,11 +35,14 @@ PEM pass phrase: ubuntu (es la clave que se te pedira cada vez que reinicies el 
 openvpn --genkey secret ta.key 
 
 es probable que ~/easy-rsa/pki/index.txt nos de problemas de permisos a la hora de crear usuarios firmados, se los otorgamos:
+sudo chown -R tuuser:root /etc/openvpn/
+sudo chown -R tuuser:root /home/ubuntu/easy-rsa
+sudo chown -R tuuser:root /home/ubuntu/openvpn-ca
 ubuntu:root
 644
 
-./easyrsa gen-req client1 nopass :client1 [nombre del cliente]
-./easyrsa sign-req client client1 :client1 [nombre del cliente]
+./easyrsa gen-req client1 nopass :client1 <-[nombre del cliente]
+./easyrsa sign-req client client1 :client1 <-[nombre del cliente]
 
 ===========TRASPASO A OPENVPN
 luego copiamos los certificados y ficheros creados a /etc/openvpn/server
@@ -53,7 +56,7 @@ cp ~/easy-rsa/pki/ta.key .
 
 ===========CONFIGURACION DE SERVIDOR OPENVPN
 la configuracion del servidor se encuentra en /etc/openvpn/server/server.conf
-port 1194
+port 11194
 proto udp
 dev tun
 ca /etc/openvpn/server/ca.crt
@@ -93,11 +96,29 @@ para ver los certificados de un cliente es ./easyrsa show-cert "client2" ejemplo
 ==========SEGURIDAD Y PUERTOS
 activamos el firewall
 ufw status
-ufw allow 1194/udp
+ufw allow 11194/udp
 ufw allow OpenSSH
 ufw enable
+#EXTRA DE SEGURIDAD
+sudo apt fail2ban
+
+y creamos una copia del jail en local
+/etc/fail2ban/jail.local :
+
+[sshd]
+enabled = true #fail2ban activo
+port    = ssh  #puerto 22 por defecto (activo)
+logpath = %(sshd_log)s #esto apunta a la carpeta de log /var/log/auth.log
+backend = systemd
+maxretry = 5   #5 intentos
+bantime = 3600 #esto es una hora de baneo
+findtime = 600 #esto son 10 minutos dentro de los 5 intentos
+
 
 =========ACCESO A INTERNET CLIENTES
+=============================================================================
+SI HAY UN CAMBIO DE INTERFAZ O RED APLICAR LAS NUEVAS REGLAS DE SER NECESARIO
+=============================================================================
 vamos al fichero de configuracion: /etc/sysctl.conf
 borramos el # en:
 net.ipv4.ip_forward=1
@@ -107,11 +128,21 @@ sudo sysctl -p
 y luego para ver nuestra interfaz de red:
 ip route | grep default
 (ejemplos : eth0 ,wlan0, enp0s3,ens33)
-sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {aquí va la interfaz(sin las llaves)} -j MASQUERADE
 
-ya que es una regla iptable es probable  que se borre asi que para que se guarde y se aplique de forma automatica:
-sudo apt install iptables-persistent
-sudo netfilter-persistent save
+ya que es una regla iptable es probable  que se borre asi que para que se guarde y se aplique de forma automatica:(/etc/iptables/rules.v4)
+#entrada y salida del puerto 11194
+sudo iptables -A INPUT -p udp --dport 11194 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 11194 -j ACCEPT
+#REGLAS DE TRAFICO
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#NAT
+sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {aquí va la interfaz(sin las llaves)} -j MASQUERADE
+#TRAFICO ENTRE TUNEL Y RED EXTERNA
+sudo iptables -A FORWARD -i tun0 -o wlan0 -s 10.8.0.0/24 -j ACCEPT
+sudo iptables -A FORWARD -i wlan0 -o tun0 -d 10.8.0.0/24 -j ACCEPT
+#GUARDADO
+sudo iptables-save > /etc/iptables/rules.v4 (crear directorios en caso no existan)
 
 y ultimo paso en el servidor reiniciamos el servicio (nos pedira nuevamente la contraseña si es el caso)
 
@@ -124,20 +155,67 @@ habilitar puerto para udp con la compañia de servicio de internet (si ya se pro
 ==========================================================
 ------------CONFIGURACION CLIENTE EN LOCAL----------------
 ==========================================================
+uso del script de creacion para evitar pasar mas de un fichero, deberia quedar una estructura como esta:
+
+client
+dev tun
+proto udp
+remote IP 11194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+# Cifrado
+cipher AES-256-CBC
+data-ciphers AES-256-GCM:AES-256-CBC
+# TLS
+tls-auth /etc/openvpn/server/ta.key 1
+key-direction 1
+
+<ca>
+conten ca
+</ca>
+
+<cert>
+conten cert
+</cert>
+<key>
+conten key
+</key>
+<tls-auth>
+content auth
+</tls-auth>
+
+auth SHA512
+# Verbosidad
+verb 4
+# Reconocimiento CN
+verify-x509-name vpn.Server-CA name
+# Seguridad
+remote-cert-tls server
+# MSS Fix
+mssfix 1492
+# Keepalive
+keepalive 10 60
+
+
+EN su lugar decides pasar todos los ficheros:
 ============CONFIGURACION FICHERO.ovpn
 Esto va dentro del fichero de configuracion cliente.ovpn
 client
 dev tun
 proto udp
-remote [IP LOCAL O PUBLICA DEL SERVIDOR] 1194
+remote [IP LOCAL O PUBLICA DEL SERVIDOR] 11194
 resolv-retry infinite
+# Reconocimiento CN
+verify-x509-name vpn.Server-CA name
 nobind
 persist-key
 persist-tun
 # Cifrado
 data-ciphers AES-256-GCM:AES-256-CBC
 cipher AES-256-CBC
-# TLS
+# TLS - LE HACEMOS SABER DONDE SE ENCUENTRAN LOS FICHEROS Y NOMBRE
 tls-auth ta.key 1
 key-direction 1
 ca ca.crt
@@ -154,9 +232,11 @@ mssfix 1492
 keepalive 10 60
 
 
-================NO OLVIDAR PASAR LOS CERTIFICADOS Y KEYS CORRESPONDIENTES:
+================NO OLVIDAR PASAR LOS CERTIFICADOS Y KEYS O SOLO .OVPN CORRESPONDIENTES:
 USO DE WinSCP o por comandos SCP
 (ES PROBABLE QUE DEBAS CAMBIAR LOS PERMISOS DE FICHEROS {acceso denegado})
+FICHEROS .OVPN:
+nombre.ovpn (~/easy-rsa)
 FICHEROS DEL SERVIDOR:
 ta.key (~/easy-rsa/ta.key)
 ca.crt (~/easy-rsa/pki/ca.crt)

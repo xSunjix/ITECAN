@@ -13,10 +13,10 @@ cd ~/easy-rsa
 
 set_var EASYRSA_REQ_COUNTRY     "Es"
 set_var EASYRSA_REQ_PROVINCE    "Cantabria"
-set_var EASYRSA_REQ_CITY        "El astillero"
-set_var EASYRSA_REQ_ORG         "MAES"
-set_var EASYRSA_REQ_EMAIL       "maes@maes.es"
-set_var EASYRSA_REQ_OU          "Manutención"
+set_var EASYRSA_REQ_CITY        "Santader"
+set_var EASYRSA_REQ_ORG         "Ext_itecan"
+set_var EASYRSA_REQ_EMAIL       "me@example.net"
+set_var EASYRSA_REQ_OU          "It"
 set_var EASYRSA_ALGO            "ec"
 set_var EASYRSA_DIGEST          "sha512"
 
@@ -109,7 +109,7 @@ ip route | grep default
 (ejemplos : eth0 ,wlan0, enp0s3,ens33)
 sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {aquí va la interfaz(sin las llaves)} -j MASQUERADE
 
-ya que es una regla iptable es probable  que se borre asi que para que se guarde y se aplique de forma automatica:
+ya que es una regla iptable es probable  que se borre asi que para que se guarde y se aplique de forma automatica:(/etc/iptables/rules.v4 y .v6)
 sudo apt install iptables-persistent
 sudo netfilter-persistent save
 
