@@ -143,8 +143,8 @@ sudo iptables -A FORWARD -i tun0 -o wlan0 -s 10.8.0.0/24 -j ACCEPT
 sudo iptables -A FORWARD -i wlan0 -o tun0 -d 10.8.0.0/24 -j ACCEPT
 #GUARDADO
 sudo iptables-save > /etc/iptables/rules.v4 (crear directorios en caso no existan)
-
-y ultimo paso en el servidor reiniciamos el servicio (nos pedira nuevamente la contraseña si es el caso)
+Y LO MAS FACTIBLE AQUI ES QUE EN EL AUTOSTART SE RESTAUREN LAS REGLAS DE SEGURIDAD CON EL COMANDO 
+y ultimo paso en el servidor reiniciamos el servicio (nos pedira nuevamente la contraseña si es el caso de no usar nopass) con esto verificamos que las reglas se apliquen correctamente al iniciar y los clientes tengan internet y nosotros también
 
 sudo systemctl restart openvpn-server@server.service
 
